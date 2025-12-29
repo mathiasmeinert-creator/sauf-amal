@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realistische Bierflaschen Animation</title>
+  <style>
+    /* --- GRUNDLAYOUT --- */
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, #1a1005 0%, #000000 100%);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Größer overall */
+    #scene {
+      position: relative;
+      width: 900px;
+      height: 900px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #liquidCanvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* --- LOGIN OVERLAY --- */
+    .login-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(700px 500px at 35% 30%, rgba(255, 255, 255, 0.08), transparent 55%),
+        radial-gradient(800px 600px at 70% 80%, rgba(255, 200, 0, 0.08), transparent 60%),
+        rgba(0,0,0,0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .login-card {
+      width: min(420px, calc(100% - 32px));
+      padding: 18px 18px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 25px 70px rgba(0,0,0,0.55);
+      color: rgba(255,255,255,0.92);
+    }
+
+    .login-title {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: 0.3px;
+    }
+
+    .login-sub {
+      margin: 0 0 14px;
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .login-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .login-input {
+      flex: 1;
+      height: 42px;
+      padding: 0 12px;
+      border-radius: 12px;
+      outline: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.25);
+      color: rgba(255,255,255,0.92);
+      font-size: 14px;
+    }
+    .login-input::placeholder { color: rgba(255,255,255,0.45); }
+
+    .login-btn {
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      background: linear-gradient(180deg, rgba(255, 215, 0, 0.22), rgba(184, 134, 11, 0.16));
+      color: rgba(255,255,255,0.95);
+      cursor: pointer;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .login-btn:active { transform: translateY(1px); }
+
+    .login-error {
+      margin-top: 10px;
+      font-size: 13px;
+      color: rgba(255, 120, 120, 0.95);
+      min-height: 18px;
+    }
+
+    .login-hide {
+      display: none !important;
+    }
+
+    /* --- FLASCHEN CONTAINER --- */
+    .bottle-wrapper {
+      position: relative;
+      width: 170px;     /* größer */
+      height: 600px;    /* größer */
+      z-index: 10;
+      transform-origin: bottom center;
+      filter: drop-shadow(0px 20px 14px rgba(0,0,0,0.65));
+    }
+
+    .bottle-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* --- MATERIAL DEFINITIONEN (SVG) --- */
+    .glass-dark { fill: #3e2723; stroke: none; }
+    .liquid-beer { fill: #ffb300; }
+    .liquid-foam { fill: #fff8e1; }
+
+    .label-base { fill: #f5f5f5; stroke: #d3d3d3; stroke-width: 0.5; }
+    .label-gold { fill: #ffd700; }
+    .label-red { fill: #b71c1c; }
+    .label-text { fill: #212121; font-family: serif; font-weight: bold; }
+    .foil-gold { fill: url(#goldGradient); }
+
+.cap {
+  fill: #c0c0c0;
+  stroke: #555;
+  stroke-width: 1;
+}
+
+    .highlight-left { fill: rgba(255,255,255,0.15); filter: blur(2px); }
+    .highlight-right { fill: rgba(255,255,255,0.3); filter: blur(3px); }
+    .highlight-edge { stroke: rgba(255,255,255,0.4); stroke-width: 1; fill: none; }
+
+    .drop { fill: rgba(255,255,255,0.3); stroke: rgba(255,255,255,0.1); stroke-width: 0.5; }
+
+    .bubble-rise {
+      fill: rgba(255, 255, 255, 0.4);
+      animation: riseBubbles 3s infinite linear;
+    }
+    @keyframes riseBubbles {
+      0% { transform: translateY(0); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translateY(-110px); opacity: 0; }
+    }
+
+    /* --- ANIMATIONEN --- */
+    #bottle-left {
+      transform: rotate(-15deg) translateX(-90px);
+      animation: moveLeft 2000ms infinite ease-in-out;
+    }
+
+    #bottle-right {
+      transform: rotate(15deg) translateX(90px);
+      animation: moveRight 2000ms infinite ease-in-out;
+    }
+
+    /* angepasst auf größere Szene */
+    @keyframes moveLeft {
+      0%   { transform: rotate(-25deg) translate(-135px, 0); }
+      45%  { transform: rotate(-5deg)  translate(-22px, -22px); }
+      50%  { transform: rotate(0deg)   translate(0px, -36px) scale(1.02); }
+      55%  { transform: rotate(-8deg)  translate(-36px, -8px); }
+      100% { transform: rotate(-25deg) translate(-135px, 0); }
+    }
+
+    @keyframes moveRight {
+      0%   { transform: rotate(25deg)  translate(135px, 0); }
+      45%  { transform: rotate(5deg)   translate(22px, -22px); }
+      50%  { transform: rotate(0deg)   translate(0px, -36px) scale(1.02); }
+      55%  { transform: rotate(8deg)   translate(36px, -8px); }
+      100% { transform: rotate(25deg)  translate(135px, 0); }
+    }
+
+    .impact-flash {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px; height: 160px; /* größer */
+      background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,200,0,0) 70%);
+      opacity: 0;
+      z-index: 15;
+      animation: flash 2000ms infinite;
+      pointer-events: none;
+    }
+    @keyframes flash {
+      48% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+      50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.6); }
+      53% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="scene">
+  <div class="impact-flash"></div>
+  <canvas id="liquidCanvas"></canvas>
+
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-card">
+      <h3 class="login-title">🍺</h3>
+      <p class="login-sub">Passwort eingeben, dann geht’s weiter zur App.</p>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="login-row">
+          <input
+            class="login-input"
+            id="pw"
+            type="password"
+            placeholder="Passwort"
+            aria-label="Passwort"
+          />
+          <button class="login-btn" type="submit">saufen</button>
+        </div>
+        <div class="login-error" id="loginError"></div>
+      </form>
+    </div>
+  </div>
+
+  <svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+      <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#b8860b;stop-opacity:1" />
+        <stop offset="50%" style="stop-color:#ffd700;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
+      </linearGradient>
+
+      <path id="bottleShape" d="
+        M 25,400
+        L 95,400
+        Q 105,400 105,380
+        L 105,160
+        Q 105,110 80,90
+        L 75,80
+        L 75,20
+        L 80,15 L 80,5 L 40,5 L 40,15 L 45,20
+        L 45,80
+        Q 40,90 15,110
+        Q 15,160 15,160
+        L 15,380
+        Q 15,400 25,400 Z
+      " />
+
+      <clipPath id="bottleClip">
+        <use href="#bottleShape" />
+      </clipPath>
+    </defs>
+  </svg>
+
+  <div class="bottle-wrapper" id="bottle-left">
+    <svg class="bottle-svg" viewBox="0 0 120 420">
+  <defs>
+    <path id="bottleShapeL" d="
+      M 25,400
+      L 95,400
+      Q 105,400 105,380
+      L 105,160
+      Q 105,110 80,90
+      L 75,80
+      L 75,20
+      L 80,15 L 80,5 L 40,5 L 40,15 L 45,20
+      L 45,80
+      Q 40,90 15,110
+      Q 15,160 15,160
+      L 15,380
+      Q 15,400 25,400 Z
+    " />
+    <clipPath id="bottleClipL">
+      <use href="#bottleShapeL"></use>
+    </clipPath>
+
+    <linearGradient id="goldGradientL" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b8860b" stop-opacity="1" />
+      <stop offset="50%" stop-color="#ffd700" stop-opacity="1" />
+      <stop offset="100%" stop-color="#b8860b" stop-opacity="1" />
+    </linearGradient>
+  </defs>
+
+  <g clip-path="url(#bottleClipL)">
+    <rect width="120" height="420" class="glass-dark" />
+    <rect x="0" y="130" width="120" height="300" class="liquid-beer" />
+    <rect x="0" y="115" width="120" height="25" class="liquid-foam" />
+
+    <circle cx="40" cy="350" r="2" class="bubble-rise" style="animation-delay: 0.1s" />
+    <circle cx="70" cy="300" r="1.5" class="bubble-rise" style="animation-delay: 0.5s" />
+    <circle cx="50" cy="200" r="2.5" class="bubble-rise" style="animation-delay: 1.2s" />
+  </g>
+
+  <use href="#bottleShapeL" class="highlight-edge" />
+
+  <path d="M 45,85 L 75,85 L 75,20 L 45,20 Z" fill="url(#goldGradientL)" />
+  <path d="M 45,85 Q 60,95 75,85 L 75,85" fill="rgba(0,0,0,0.2)" />
+
+  <ellipse cx="60" cy="260" rx="35" ry="45" class="label-base" />
+  <ellipse cx="60" cy="260" rx="32" ry="42" fill="none" stroke="#b71c1c" stroke-width="1" />
+  <rect x="35" y="250" width="50" height="20" class="label-red" rx="2" />
+  <text x="60" y="265" font-size="12" text-anchor="middle" fill="white" font-weight="bold" font-family="serif">SAUFT</text>
+  <text x="60" y="240" font-size="8" text-anchor="middle" fill="#333">KOANA</text>
+  <text x="60" y="290" font-size="8" text-anchor="middle" fill="#333">MEHR</text>
+
+  <path d="M 30,120 Q 30,110 50,90 L 50,30 L 47,30 L 47,90 Q 25,110 25,160 L 25,380" class="highlight-left" />
+  <path d="M 90,160 L 90,380" stroke="rgba(255,255,255,0.2)" stroke-width="4" fill="none" filter="blur(2px)" />
+
+  <!-- FIX: silver Farbe -->
+  <rect x="38" y="0" width="44" height="8" rx="2" fill="silver" />
+  <rect x="38" y="0" width="44" height="8" rx="2" fill="url(#goldGradientL)" />
+
+  <circle cx="40" cy="180" r="1.5" class="drop" />
+  <circle cx="85" cy="220" r="2" class="drop" />
+  <circle cx="30" cy="300" r="1.5" class="drop" />
+</svg>
+  </div>
+
+  <div class="bottle-wrapper" id="bottle-right">
+    <svg class="bottle-svg" viewBox="0 0 120 420">
+      <g clip-path="url(#bottleClip)">
+        <rect width="120" height="420" class="glass-dark" />
+        <rect x="0" y="130" width="120" height="300" class="liquid-beer" />
+        <rect x="0" y="115" width="120" height="25" class="liquid-foam" />
+
+        <circle cx="50" cy="360" r="2" class="bubble-rise" style="animation-delay: 0.3s" />
+        <circle cx="80" cy="280" r="2.5" class="bubble-rise" style="animation-delay: 0.8s" />
+      </g>
+
+      <use href="#bottleShape" class="highlight-edge" />
+
+      <path d="M 45,85 L 75,85 L 75,20 L 45,20 Z" class="foil-gold" />
+
+      <ellipse cx="60" cy="260" rx="35" ry="45" class="label-base" />
+      <ellipse cx="60" cy="260" rx="32" ry="42" fill="none" stroke="#b71c1c" stroke-width="1" />
+      <rect x="35" y="250" width="50" height="20" class="label-red" rx="2" />
+      <text x="60" y="265" font-size="12" text-anchor="middle" fill="white" font-weight="bold" font-family="serif">PREMIUM</text>
+      <text x="60" y="240" font-size="8" text-anchor="middle" fill="#333">EST. 1892</text>
+      <text x="60" y="290" font-size="8" text-anchor="middle" fill="#333">LAGER BEER</text>
+
+      <path d="M 90,120 Q 90,110 70,90 L 70,30 L 73,30 L 73,90 Q 95,110 95,160 L 95,380" class="highlight-right" />
+      <path d="M 30,160 L 30,380" stroke="rgba(255,255,255,0.1)" stroke-width="4" fill="none" filter="blur(2px)" />
+
+      <rect x="38" y="0" width="44" height="8" rx="2" fill="url(#goldGradient)" />
+
+      <circle cx="50" cy="190" r="2" class="drop" />
+      <circle cx="90" cy="320" r="1.5" class="drop" />
+    </svg>
+  </div>
+</div>
+
+<script>
+  /* --- LOGIN --- */
+  const loginOverlay = document.getElementById('loginOverlay');
+  const loginForm = document.getElementById('loginForm');
+  const pwInput = document.getElementById('pw');
+  const loginError = document.getElementById('loginError');
+
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pw = (pwInput.value || "").trim();
+
+    if (pw === "saufen") {
+  sessionStorage.setItem("isLoggedIn", "true");
+  window.location.href = "./app.html";
+} else {
+      loginError.textContent = "Falsches Passwort. Tipp: saufen 😉";
+      pwInput.focus();
+      pwInput.select();
+    }
+  });
+
+  /* --- PHYSIK ENGINE FÜR FLÜSSIGKEIT --- */
+  const canvas = document.getElementById('liquidCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let width, height;
+  function resize() {
+    const rect = document.getElementById('scene').getBoundingClientRect();
+    width = rect.width;
+    height = rect.height;
+    canvas.width = Math.round(width);
+    canvas.height = Math.round(height);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  class Particle {
+    constructor(type) {
+      this.x = width / 2 + (Math.random() - 0.5) * 14;
+      this.y = height * 0.35;
+
+      this.type = type;
+
+      // etwas stärker, damit's in groß auch "saftig" wirkt
+      this.vx = (Math.random() - 0.5) * 34;
+      this.vy = -Math.random() * 20 - 6;
+
+      this.gravity = 0.9;
+      this.life = 1.0;
+
+      if (this.type === 'foam') {
+        this.radius = Math.random() * 7 + 4;
+        this.color = `255, 255, 255`;
+        this.gravity = 0.35;
+        this.drag = 0.92;
+        this.decay = Math.random() * 0.028 + 0.010;
+      } else {
+        this.radius = Math.random() * 4 + 1.4;
+        this.color = `255, 179, 0`;
+        this.gravity = 0.95;
+        this.drag = 0.98;
+        this.decay = Math.random() * 0.032 + 0.020;
+      }
+    }
+
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vy += this.gravity;
+      this.vx *= this.drag;
+      this.life -= this.decay;
+    }
+
+    draw(ctx) {
+      if (this.life <= 0) return;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${this.color}, ${this.life})`;
+      ctx.fill();
+    }
+  }
+
+  let particles = [];
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw(ctx);
+
+      if (particles[i].life <= 0 || particles[i].y > height + 50) {
+        particles.splice(i, 1);
+        i--;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  function triggerSplash() {
+    const particleCount = 110; // etwas mehr in groß
+    for (let i = 0; i < particleCount; i++) {
+      const type = Math.random() > 0.4 ? 'foam' : 'drop';
+      particles.push(new Particle(type));
+    }
+  }
+
+  // Sync: 2s loop, 50% impact => 1000ms
+  setTimeout(() => {
+    triggerSplash();
+    setInterval(triggerSplash, 2000);
+  }, 1000);
+</script>
+</body>
+</html>
