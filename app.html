@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Die wahre Website</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+
+<body>
+  <!-- Guard (Spaß-level) -->
+  <script>
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+      window.location.href = "index.html";
+    }
+  </script>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="brand-text">Keiner sauft, oder 🍺?</span>
+    </div>
+
+    <div class="top-actions">
+      <span id="syncState" class="pill">offline mode</span>
+      <button id="logoutBtn" class="btn btn-ghost" type="button">Logout</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h3>Folder</h3>
+      <ul id="folderList">
+        <li data-name="Rolph">Rolph</li>
+        <li data-name="Matze">Matze</li>
+        <li data-name="Simon">Simon</li>
+        <li data-name="Sebi">Sebi</li>
+        <li data-name="Wenzel">Wenzel</li>
+        <li data-name="David">David</li>
+        <li data-name="Luis">Luis</li>
+        <li data-name="Jimbo">Jimbo</li>
+        <li data-name="Kessi">Kessi</li>
+        <li data-name="Luca">Luca</li>
+        <li data-name="Flo">Flo</li>
+      </ul>
+
+      <div class="sidebar-footer muted">
+        <div><b>Hinweis:</b> Promille ist nur Schätzung.</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="card">
+        <div class="row">
+          <div>
+            <h1 id="personTitle">📁 Wähle links einen Folder</h1>
+            <p class="muted" id="personHint">Dann kannst du Getränke eintragen und dein Profil speichern.</p>
+          </div>
+          <div class="promille">
+            <div class="promille-label">Aktueller Promille (geschätzt)</div>
+            <div class="promille-value" id="promilleNow">–</div>
+            <div class="promille-sub muted" id="promilleSub">–</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h2>Profil</h2>
+
+          <div class="form">
+            <div class="field">
+              <label>Geschlecht</label>
+              <select id="gender">
+                <option value="m">m</option>
+                <option value="f">f</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Größe (cm)</label>
+              <input id="heightCm" type="number" min="120" max="230" placeholder="z.B. 180" />
+            </div>
+
+            <div class="field">
+              <label>Gewicht (kg)</label>
+              <input id="weightKg" type="number" min="35" max="250" step="0.1" placeholder="z.B. 78" />
+            </div>
+
+            <button id="saveProfileBtn" class="btn" type="button">Profil speichern</button>
+            <div id="profileStatus" class="status muted"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Getränk eintragen</h2>
+          <p class="muted">Ein Klick = ein Eintrag mit Zeitstempel.</p>
+
+          <div class="drink-grid" id="drinkButtons"></div>
+
+          <div class="status muted" id="drinkStatus"></div>
+        </article>
+
+        <!-- ✅ NEU: Zusammenfassung Balken -->
+        <article class="card wide">
+          <div class="row row-tight">
+            <h2>Zusammenfassung: Promille jetzt</h2>
+            <span class="muted small" id="summaryHint">–</span>
+          </div>
+          <div id="summaryBars" class="bars"></div>
+        </article>
+
+        <article class="card wide">
+          <div class="row row-tight">
+            <h2>Alle konsumierten Getränke</h2>
+            <div class="filters">
+              <select id="filterWho">
+                <option value="ALL">Alle</option>
+              </select>
+              <button id="refreshBtn" class="btn btn-ghost" type="button">Refresh</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Zeit</th>
+                  <th>Name</th>
+                  <th>Getränk</th>
+                  <th>g Alkohol</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="drinkTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="muted small" id="tableHint"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

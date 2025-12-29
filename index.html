@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <!-- Hintergrund -->
+  <div class="bg-bottle-wrap" aria-hidden="true">
+    <!-- Überarbeitetes, klareres Flaschen-SVG inkl. Etikett "sauf amal" -->
+    <svg class="bg-bottle" viewBox="0 0 260 620" aria-hidden="true">
+      <defs>
+        <!-- dezentes Spotlight -->
+        <radialGradient id="spot" cx="50%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="rgba(255,255,255,.55)"/>
+          <stop offset="55%" stop-color="rgba(255,255,255,.10)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+
+        <!-- Glas -->
+        <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,255,255,.18)"/>
+          <stop offset="30%" stop-color="rgba(255,255,255,.10)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,.06)"/>
+        </linearGradient>
+
+        <!-- Bier -->
+        <linearGradient id="beer" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,220,120,.88)"/>
+          <stop offset="60%" stop-color="rgba(255,185,70,.82)"/>
+          <stop offset="100%" stop-color="rgba(215,125,35,.75)"/>
+        </linearGradient>
+
+        <!-- Label -->
+        <linearGradient id="label" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,255,255,.18)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,.10)"/>
+        </linearGradient>
+
+        <!-- kleiner Glanz -->
+        <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+          <stop offset="45%" stop-color="rgba(255,255,255,.16)"/>
+          <stop offset="60%" stop-color="rgba(255,255,255,.06)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+
+      <circle cx="130" cy="260" r="190" fill="url(#spot)" />
+
+      <!-- Kronkorken -->
+      <path d="M105 58
+               C105 42, 155 42, 155 58
+               L155 80
+               C155 88, 147 94, 139 94
+               L121 94
+               C113 94, 105 88, 105 80
+               Z"
+            fill="rgba(255,255,255,.12)"
+            stroke="rgba(255,255,255,.18)"
+            stroke-width="2"/>
+
+      <!-- Hals -->
+      <path d="M112 90
+               C112 78, 148 78, 148 90
+               L148 188
+               C148 206, 164 218, 164 240
+               L164 260
+               C164 282, 148 300, 126 300
+               L134 300
+               L126 300
+               C104 300, 88 282, 88 260
+               L88 240
+               C88 218, 104 206, 104 188
+               L104 90
+               C104 78, 112 78, 112 90
+               Z"
+            fill="url(#glass)"
+            stroke="rgba(255,255,255,.18)"
+            stroke-width="2"
+            stroke-linejoin="round"/>
+
+      <!-- Körper (bessere Silhouette: Schulter + Bauch + Standfuß) -->
+      <path d="M78 300
+               C78 264, 182 264, 182 300
+               L182 520
+               C182 554, 158 578, 130 578
+               C102 578, 78 554, 78 520
+               Z"
+            fill="url(#glass)"
+            stroke="rgba(255,255,255,.18)"
+            stroke-width="2"
+            stroke-linejoin="round"/>
+
+      <!-- Bierfüllung (innen) -->
+      <path d="M90 342
+               C90 318, 170 318, 170 342
+               L170 512
+               C170 538, 152 556, 130 556
+               C108 556, 90 538, 90 512
+               Z"
+            fill="url(#beer)"
+            opacity=".92"/>
+
+      <!-- Glas-Glanzstreifen -->
+      <path d="M108 112
+               C106 152, 106 220, 108 266
+               C110 312, 110 456, 108 528"
+            stroke="url(#shine)"
+            stroke-width="14"
+            stroke-linecap="round"
+            fill="none"
+            opacity=".9"/>
+
+      <!-- Etikett -->
+      <g>
+        <rect x="86" y="392" width="88" height="88" rx="16"
+              fill="url(#label)"
+              stroke="rgba(255,255,255,.22)"
+              stroke-width="2"/>
+
+        <!-- kleine Zierlinie -->
+        <path d="M100 420 H160" stroke="rgba(255,255,255,.22)" stroke-width="6" stroke-linecap="round"/>
+        <path d="M106 450 H154" stroke="rgba(255,255,255,.18)" stroke-width="4" stroke-linecap="round"/>
+
+        <!-- Text auf Etikett -->
+        <text x="130" y="440"
+              text-anchor="middle"
+              font-size="18"
+              font-weight="700"
+              fill="rgba(255,255,255,.86)"
+              style="letter-spacing: .5px;">
+          sauf amal
+        </text>
+      </g>
+
+      <!-- Standfuß-Kante -->
+      <path d="M92 530 C102 556, 158 556, 168 530"
+            fill="none"
+            stroke="rgba(255,255,255,.14)"
+            stroke-width="6"
+            stroke-linecap="round"
+            opacity=".8"/>
+    </svg>
+  </div>
+
+  <!-- Login -->
+  <div class="card" role="dialog" aria-label="Login">
+    <h1>Login</h1>
+
+    <label for="password">Passwort</label>
+    <input id="password" type="password" autocomplete="current-password" />
+
+    <button id="loginBtn">Passwort bestätigen</button>
+    <p id="status"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>w
